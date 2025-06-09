@@ -307,6 +307,8 @@ The technical choices for this project were made to deliver a feature-complete a
 **1. Third-Party API Rate Limiting**
 The application's primary constraint is its reliance on the free tier of the Twelve Data API, which imposes strict rate limits. A multi-faceted throttling and scheduling strategy was engineered to ensure the application remains robust and functional without exceeding these limits.
 
+Additionally, for the WebSocket symbol subscription, only AAPL and BTC/USD return live data, while the rest are not responsive althought there is no error occurance. This could be limited by the free tier plan, as the websocket subscription to TWELVE DATA worked perfectly for AAPL and BTC/USD.
+
 - **Initial Price Fetching (Margin Calculation):**
 When a client's margin status is calculated, the system may need to fetch prices for multiple assets not present in the local cache. To manage this, the logic in `marginService.js` fetches these prices in controlled batches: a maximum of 8 symbols are requested at a time, and after each batch, the system enforces a 61-second pause before sending the next one, which might cause the display of *loading page* to persist for 1 minute on fresh load without cache data [61_sec_demo](https://drive.google.com/file/d/1hI4LeeFYXCEK7fMKvwY5aF2YAYwPfIP8/view?usp=drive_link). This ensures the application stays reliably within the API's per-minute request limit.
 
