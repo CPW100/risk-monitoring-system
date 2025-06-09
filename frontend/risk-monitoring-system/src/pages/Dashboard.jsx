@@ -1,6 +1,3 @@
-// Dashboard.jsx
-
-// ... (imports and CustomTooltip component remain the same) ...
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import {
@@ -8,6 +5,13 @@ import {
 } from 'recharts';
 import api from '../api/api';
 
+/**
+ * A custom tooltip component for Recharts' LineChart.
+ * @param {boolean} active If the tooltip is currently active.
+ * @param {object} payload The data point payload associated with the active tooltip.
+ * @param {string|number} label The label of the data point.
+ * @returns {React.ReactElement} A tooltip element with the relevant data point information.
+ */
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length > 0) {
     const { open, high, low, close, volume } = payload[0].payload;
@@ -27,8 +31,19 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 
+/**
+ * Dashboard component for displaying client portfolio and margin status.
+ * Manages WebSocket connections for real-time updates and displays a price chart.
+ * 
+ * @param {Object} props - The props for the Dashboard component.
+ * @param {Object} props.client - The client data object containing client details.
+ * @param {Function} props.onLogout - Callback function to handle logout.
+ * @param {WebSocket} props.ws - WebSocket instance for real-time data communication.
+ * 
+ * @returns {React.ReactElement} A rendered dashboard component.
+ */
 export default function Dashboard({ client, onLogout, ws }) {
-  // ... (all state variables remain the same) ...
+  
   const [positions, setPositions] = useState([]);
   const [marginStatus, setMarginStatus] = useState(null);
   const [selectedSymbol, setSelectedSymbol] = useState(null);
@@ -41,7 +56,6 @@ export default function Dashboard({ client, onLogout, ws }) {
   const lastSubscribedSymbolsRef = useRef([]);
   const initialSubscriptionSentRef = useRef(false);
 
-  // ... (fetchChartData useCallback remains the same) ...
   const fetchChartData = useCallback(async () => {
     if (!selectedSymbol) return;
     try {
@@ -106,7 +120,6 @@ export default function Dashboard({ client, onLogout, ws }) {
     fetchInitialData();
   }, [client.client_id]);
 
-  // ... (all other useEffect hooks and the main return structure remain the same) ...
   // Subscribe when symbols change
   useEffect(() => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -115,20 +128,31 @@ export default function Dashboard({ client, onLogout, ws }) {
                    symbols.every((sym, idx) => sym === lastSubscribedSymbolsRef.current[idx]);
                    
     // Send a subscription if the symbols have changed OR if the first subscription hasn't been sent yet
-    if (!isSame || !initialSubscriptionSentRef.current) {
-      ws.send(JSON.stringify({ type: 'subscribe', clientId: client.client_id, symbols }));
-      lastSubscribedSymbolsRef.current = symbols;
-      initialSubscriptionSentRef.current = true; // Mark that the initial subscription has been sent
-      console.log('Sent subscription for symbols:', symbols);
-    }
+    const timerId = setTimeout(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        if (!isSame || !initialSubscriptionSentRef.current) {
+          ws.send(JSON.stringify({ type: 'subscribe', clientId: client.client_id, symbols }));
+          lastSubscribedSymbolsRef.current = symbols;
+          initialSubscriptionSentRef.current = true; // Mark that the initial subscription has been sent
+        }
+      }
+    }, 1000)
+    return () => clearTimeout(timerId);
   }, [ws, positions, client.client_id]);
 
   // WebSocket event handlers
   useEffect(() => {
     if (!ws) return;
+    /**
+     * Handles WebSocket messages from the server.
+     * @param {MessageEvent} event - The WebSocket message event.
+     * @private
+     */
     const handleMessage = (event) => {
       const msg = JSON.parse(event.data);
       switch (msg.type) {
+
+        // Update current price in position table
         case 'priceUpdate':
           setLastUpdatedSymbol(msg.symbol);
           setPositions((prevPositions) => 
@@ -143,6 +167,8 @@ export default function Dashboard({ client, onLogout, ws }) {
           );
           setTimeout(() => setLastUpdatedSymbol(null), 500);
           break;
+
+        // Update margin status
         case 'marginUpdate':
           setMarginStatus(msg);
           break;
@@ -150,13 +176,22 @@ export default function Dashboard({ client, onLogout, ws }) {
           console.warn('Unknown WS message type:', msg.type);
       }
     };
+
+    /**
+     * Handles the WebSocket connection open event.
+     * @private
+     */
     const handleOpen = () => setConnectionStatus('Connected');
     const handleClose = () => setConnectionStatus('Disconnected');
     const handleError = () => setConnectionStatus('Error');
+
+    // Add event listeners
     ws.addEventListener('message', handleMessage);
     ws.addEventListener('open', handleOpen);
     ws.addEventListener('close', handleClose);
     ws.addEventListener('error', handleError);
+
+    // Clean up event listeners
     return () => {
       ws.removeEventListener('message', handleMessage);
       ws.removeEventListener('open', handleOpen);
@@ -181,14 +216,18 @@ export default function Dashboard({ client, onLogout, ws }) {
   return (
     <div className="dashboard-container" style={styles.container}>
       <header style={styles.header}>
+        {/* Welcome message */}
         <h2>Welcome, {client.name}</h2>
         <div>
+          {/* Websocket Connection Indicator */}
           <span style={{...styles.statusIndicator, backgroundColor: connectionStatus === 'Connected' ? '#28a745' : '#dc3545'}}></span>
           {connectionStatus}
         </div>
+        {/* Logout button */}
         <button onClick={onLogout} style={styles.logoutButton}>Logout</button>
       </header>
 
+      {/* Render margin status */}
       {marginStatus && (
           <section style={styles.marginSection}>
             <h3>Margin Status</h3>
@@ -220,6 +259,8 @@ export default function Dashboard({ client, onLogout, ws }) {
       )}
 
       <section style={styles.content}>
+
+        {/* Render position table */}
         <aside style={styles.sidebar}>
           <h3>Your Positions</h3>
           <div style={styles.positionTableWrapper}>
@@ -232,7 +273,7 @@ export default function Dashboard({ client, onLogout, ws }) {
                 </tr>
               </thead>
               <tbody>
-                {/* UPDATED: Added a check for empty positions array */}
+                {/* Add a check for empty positions array */}
                 {Array.isArray(positions) && positions.length > 0 ? (
                   positions.map(pos => (
                     <tr
@@ -270,6 +311,8 @@ export default function Dashboard({ client, onLogout, ws }) {
           <h3>Price Chart: {selectedSymbol || 'Select a symbol'}</h3>
 
           <div style={styles.intervalButtons}>
+
+            {/* Render interval buttons */}
             {['1day', '1week', '1month', '1year'].map(intv => (
               <button
                 key={intv}
@@ -285,6 +328,8 @@ export default function Dashboard({ client, onLogout, ws }) {
           </div>
           
           <div style={styles.chartWrapper}>
+
+            {/* Render price chart */}
             <ResponsiveContainer>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
