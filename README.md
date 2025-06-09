@@ -179,16 +179,19 @@ Each user represents a unique use case to showcase the application's features an
 - Log in as: `Leo Vinci`
 - Profile: This user has a registered account but currently holds no positions and has no outstanding loan.
 - Expected Outcome: The dashboard will cleanly display an empty state, showing "No positions available" or zero values for all financial metrics. This demonstrates the UI's ability to gracefully handle new users or empty portfolios without errors.
+- Demo: [client_noPos_noLoan](https://drive.google.com/file/d/1PHRZfi6uVxCI0UitGAB2963fAD-mEzd7/view?usp=drive_link)
 
 **Scenario 4: High Net Worth, No-Leverage Account**
 - Log in as: `Charlie Munger`
 - Profile: This user holds a high-value portfolio but has taken no loan.
 - Expected Outcome: The system will show a large portfolio value and net equity, with a margin requirement of $0. This demonstrates the correct handling of accounts that do not use leverage.
+- Demo: [normal_demo_pc](https://drive.google.com/file/d/1okaB-i8Bs4I6qKeFeS7Vs8qF-Viro2K-/view?usp=drive_link), [normal_demo_phone](https://drive.google.com/file/d/1GsEYkMiiozIDASz1nMZmgR14_utKrKQe/view?usp=drive_link) 
 
 **Scenario 5: Edge Case - Loan with No Assets**
 - Log in as: `Donald Trump`
 - Profile: This user represents an edge case where a client has a significant loan but no positions in their portfolio.
 - Expected Outcome: The portfolio value will be $0, and the net equity will be negative. This will trigger an immediate and significant margin call, showcasing the system's robustness in handling unusual financial situations.
+- Demo: [client_noPos_haveLoan](https://drive.google.com/file/d/1aHnrbUJ-mYEXaY7V68yqwKvvBPR6jrQT/view?usp=drive_link)
 
 
 ## API and Websocket Usage
@@ -300,7 +303,7 @@ The technical choices for this project were made to deliver a feature-complete a
 The application's primary constraint is its reliance on the free tier of the Twelve Data API, which imposes strict rate limits. A multi-faceted throttling and scheduling strategy was engineered to ensure the application remains robust and functional without exceeding these limits.
 
 - **Initial Price Fetching (Margin Calculation):**
-When a client's margin status is calculated, the system may need to fetch prices for multiple assets not present in the local cache. To manage this, the logic in `marginService.js` fetches these prices in controlled batches: a maximum of 8 symbols are requested at a time, and after each batch, the system enforces a 61-second pause before sending the next one, which might cause the display of *loading page* to persist for 1 minute. This ensures the application stays reliably within the API's per-minute request limit.
+When a client's margin status is calculated, the system may need to fetch prices for multiple assets not present in the local cache. To manage this, the logic in `marginService.js` fetches these prices in controlled batches: a maximum of 8 symbols are requested at a time, and after each batch, the system enforces a 61-second pause before sending the next one, which might cause the display of *loading page* to persist for 1 minute on fresh load without cache data (61_sec_demo)[https://drive.google.com/file/d/1hI4LeeFYXCEK7fMKvwY5aF2YAYwPfIP8/view?usp=drive_link]. This ensures the application stays reliably within the API's per-minute request limit.
 
 - **Real-Time WebSocket Subscriptions:**
 A similar strategy is used for real-time updates. The WebSocket server (wsServer.js) rotates its active price subscriptions to provide broad coverage over time:
