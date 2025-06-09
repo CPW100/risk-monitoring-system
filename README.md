@@ -121,8 +121,9 @@ The REST API will be running on http://localhost:5000 and the WebSocket server o
 Bash
 
 npm install
-Run the development server:
 ```
+
+Run the development server:
 
 ```
 Bash
@@ -145,8 +146,9 @@ You can expose the development server to your local network.
 ```
 Bash
 
-npm run dev -- --host
+npm run dev 
 ```
+
 *(Note: The extra -- is necessary for npm to pass the flag to the Vite script).*
 
 - **Finally, on your phone** (ensuring it's on the same Wi-Fi network), open a web browser and navigate to:
@@ -319,7 +321,7 @@ A similar strategy is used for real-time updates. The WebSocket server (wsServer
 
 To ensure a fast user experience for chart visualizations and to further conserve API credits, historical chart data is cached in the database for 12 hours.
 
-    - **Theoretical Throughput:** This allows the system to handle a maximum of 8 new (uncached) chart data requests per minute. Repeated requests for the same chart are served instantly from the database.
+- **Theoretical Throughput:** This allows the system to handle a maximum of 8 new (uncached) chart data requests per minute. Repeated requests for the same chart are served instantly from the database.
 
 The trade-off of this comprehensive strategy is a potential delay (1 to 2 minutes) when fetching prices for new or untracked stocks, but it guarantees the application's stability and adherence to API constraints.
 
