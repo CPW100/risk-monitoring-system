@@ -1,4 +1,18 @@
-// __tests__/server.test.js
+/**
+ * @file This test suite provides unit tests for the Express REST API layer.
+ *
+ * @description
+ * This file uses 'supertest' to simulate HTTP requests to the API endpoints defined
+ * in `app.js`. The core testing strategy is to use `jest.mock` to completely
+ * isolate the Express app from its external dependencies, including the database,
+ * third-party APIs (via axios), and other internal services.
+ *
+ * Each `describe` block targets a specific API route, testing for both successful
+ * execution ("happy path") and various error conditions (e.g., database failures).
+ * This ensures that the route handling and controller logic are correct and resilient,
+ * independent of the actual implementation of their dependencies.
+ */
+
 
 const request = require('supertest');
 const axios = require('axios');
@@ -32,6 +46,7 @@ beforeEach(() => {
 
 describe('REST API endpoints', () => {
   describe('GET /api/clients', () => {
+    
     it('should return list of clients', async () => {
       const fakeClients = [{ client_id: 'c1', name: 'Alice' }];
       db.all.mockImplementation((q, cb) => cb(null, fakeClients));

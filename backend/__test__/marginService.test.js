@@ -1,3 +1,20 @@
+/**
+ * @file This file contains integration tests for the `calculateMarginStatus` function in the marginService.
+ *
+ * @description
+ * This test suite validates the core business logic of the margin calculation service.
+ * It employs a controlled integration testing strategy:
+ *
+ * 1.  **Live Database**: It interacts with a real (in-memory) SQLite database to accurately test the function's SQL queries and data handling logic.
+ * 2.  **Mocked Services**: The external `stockService` (which makes API calls) is mocked to ensure tests are fast, reliable, and do not depend on network connectivity.
+ *
+ * The tests cover critical scenarios, including:
+ * - The edge case of a client with no positions.
+ * - The "cache-aside" logic where missing prices are fetched and stored.
+ * - The correctness of the financial calculations for margin shortfalls and calls.
+ * - Robust error handling when database operations fail.
+ */
+
 const { calculateMarginStatus } = require('../services/marginService');
 const db = require('../db/db_init');
 const { fetchStockPrice } = require('../services/stockService');

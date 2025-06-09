@@ -1,3 +1,24 @@
+/**
+ * @file This file contains unit tests for the WSServer class.
+ *
+ * @description
+ * This test suite is designed to validate the internal logic and state management
+ * of the `WSServer` class in complete isolation. To achieve this, all external
+ * dependencies are mocked using Jest, including:
+ *
+ * 1.  **`ws` Library**: The WebSocket library itself is mocked. This means no real
+ * network connections are made. Instead, we test how the `WSServer` interacts
+ * with the WebSocket interface (e.g., calling `.on()`, `.send()`).
+ * 2.  **Services & DB**: `marginService` and `db_init` are mocked to prevent
+ * any real business logic or database queries from running.
+ *
+ * The tests simulate the lifecycle of the server and its interactions:
+ * - Handling connections, messages, and disconnections from its own clients.
+ * - Managing the connection and message flow with the mocked upstream Twelve Data WebSocket.
+ * - Correctly implementing the symbol rotation logic based on tier limits.
+ * - Triggering margin calculations and broadcasting updates upon receiving price data.
+ */
+
 const WebSocket = require('ws');
 const WSServer = require('../services/wsServer');
 const db = require('../db/db_init');
@@ -69,8 +90,6 @@ describe('WSServer', () => {
   afterEach(() => {
     wsServer.shutdown();
   });
-
-  // ... rest of your tests unchanged ...
 
   describe('Client Connection Handling', () => {
     it('should handle new client connections', () => {

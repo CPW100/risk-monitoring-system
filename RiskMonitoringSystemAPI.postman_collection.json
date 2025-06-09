@@ -1,0 +1,506 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+		"name": "Risk Monitoring API - E2E Tests",
+		"description": "A collection of end-to-end tests for the Mini Risk Monitoring System API, based on the provided test plan. Uses a dynamic variable for clientId.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Part 1: REST API Tests",
+			"item": [
+				{
+					"name": "1. Authentication",
+					"item": [
+						{
+							"name": "1.1 Successful Login (RUN THIS FIRST)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response contains success message and client data\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData.message).to.eql(\"Login successful\");",
+											"    pm.expect(jsonData.client).to.have.property('client_id');",
+											"    pm.expect(jsonData.client).to.have.property('name');",
+											"    pm.expect(jsonData.client).to.have.property('email');",
+											"});",
+											"",
+											"// Set the clientId as a collection variable for other requests to use",
+											"const jsonData = pm.response.json();",
+											"if (jsonData.client && jsonData.client.client_id) {",
+											"    pm.collectionVariables.set(\"clientId\", jsonData.client.client_id);",
+											"    console.log('Set clientId to: ' + jsonData.client.client_id);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"alice@example.com\",\n    \"password\": \"password123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/login",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"login"
+									]
+								},
+								"description": "Tests a successful login. RUN THIS FIRST to set the {{clientId}} variable for other tests."
+							},
+							"response": []
+						},
+						{
+							"name": "1.2 Failed Login (Invalid Password)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 401 Unauthorized\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Body contains error message\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData.error).to.eql(\"Invalid email or password\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"alice@example.com\",\n    \"password\": \"wrongpassword\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/login",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"login"
+									]
+								},
+								"description": "Tests a failed login attempt with a correct email but incorrect password."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. Client and Position Data",
+					"item": [
+						{
+							"name": "2.1 Retrieve All Clients",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response body is an array of clients\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.be.an('array');",
+											"    if (jsonData.length > 0) {",
+											"        pm.expect(jsonData[0]).to.have.all.keys('client_id', 'name', 'email', 'password');",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/clients",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"clients"
+									]
+								},
+								"description": "Fetches a complete list of all clients from the database."
+							},
+							"response": []
+						},
+						{
+							"name": "2.2 Retrieve Positions for Logged-In Client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array of positions\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.be.an('array');",
+											"    if (jsonData.length > 0) {",
+											"         pm.expect(jsonData[0]).to.have.all.keys('client_id', 'symbol', 'quantity', 'cost_basis');",
+											"         pm.expect(jsonData[0].client_id).to.eql(pm.collectionVariables.get('clientId'));",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/positions/{{clientId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"positions",
+										"{{clientId}}"
+									]
+								},
+								"description": "Fetches all positions for the client that logged in via the '1.1 Successful Login' request."
+							},
+							"response": []
+						},
+						{
+							"name": "2.3 Retrieve Empty Positions (for non-existent UUID)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response body is an empty array\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.be.an('array').that.is.empty;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/positions/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"positions",
+										"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+									]
+								},
+								"description": "Fetches positions for a non-existent UUID, expecting an empty array."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "3. Market, Chart, and Margin Data",
+					"item": [
+						{
+							"name": "3.1 Fetch Chart Data (API First)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array of chart data points\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.be.an('array');",
+											"    if (jsonData.length > 0) {",
+											"        const point = jsonData[0];",
+											"        pm.expect(point).to.have.all.keys('timestamp', 'open', 'high', 'low', 'close', 'volume');",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/chart-data?symbol=AAPL&interval=1day",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"chart-data"
+									],
+									"query": [
+										{
+											"key": "symbol",
+											"value": "AAPL"
+										},
+										{
+											"key": "interval",
+											"value": "1day"
+										}
+									]
+								},
+								"description": "Fetches chart data for a symbol. This should trigger a call to the Twelve Data API if the cache is empty or stale."
+							},
+							"response": []
+						},
+						{
+							"name": "3.2 Fetch Chart Data (Cache First)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response time should be fast (indicates cache hit)\", function() {",
+											"    pm.expect(pm.response.responseTime).to.be.below(200); // Adjust threshold as needed",
+											"});",
+											"",
+											"pm.test(\"Response is an array of chart data points\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.be.an('array').and.not.be.empty;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/chart-data?symbol=AAPL&interval=1day",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"chart-data"
+									],
+									"query": [
+										{
+											"key": "symbol",
+											"value": "AAPL"
+										},
+										{
+											"key": "interval",
+											"value": "1day"
+										}
+									]
+								},
+								"description": "Run this request immediately after '3.1 Fetch Chart Data (API First)'. It should be served from the cache and respond much faster."
+							},
+							"response": []
+						},
+						{
+							"name": "3.3 Calculate Margin Status for Logged-In Client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response body has correct margin status structure\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.have.all.keys(",
+											"        'clientId', 'positions', 'portfolioValue', 'loanAmount', ",
+											"        'netEquity', 'marginRequirement', 'marginShortfall', 'marginCall', 'timestamp'",
+											"    );",
+											"    pm.expect(jsonData.positions).to.be.an('array');",
+											"    pm.expect(jsonData.clientId).to.eql(pm.collectionVariables.get('clientId'));",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/margin-status/{{clientId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"margin-status",
+										"{{clientId}}"
+									]
+								},
+								"description": "Calculates margin status for the logged-in client. This may force a live API call for prices if they aren't in the DB."
+							},
+							"response": []
+						},
+						{
+							"name": "3.4 Handle Invalid Symbol for Chart Data",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400 or 500 level error\", function () {",
+											"    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+											"});",
+											"",
+											"pm.test(\"Body contains an error message\", function () {",
+											"    const jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.have.property('error');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/chart-data?symbol=INVALIDSTOCK123&interval=1day",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"chart-data"
+									],
+									"query": [
+										{
+											"key": "symbol",
+											"value": "INVALIDSTOCK123"
+										},
+										{
+											"key": "interval",
+											"value": "1day"
+										}
+									]
+								},
+								"description": "Requests data for a non-existent stock symbol to ensure the server handles the error gracefully."
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+            "name": "Part 2: Websockets Manual Tests",
+            "items": [
+                {
+                    "name": "4. Websockets Manual Tests",
+                    "item": [
+                                {
+                                    "name": "4.1 Client Registration and Subscription",
+                                    "request": {
+                                        "method": "GET",
+                                        "header": [],
+                                        "url": {
+                                        "raw": "ws://localhost:8080",
+                                        "protocol": "ws",
+                                        "host": ["localhost"],
+                                        "port": "8080"
+                                        },
+                                        "description": "Use this request to manually test the WebSocket connection.\n\nThis sends a registration message using the dynamic {{clientId}}, followed by a subscription message."
+                                    },
+                                    "ws": {
+                                        "messages": [
+                                        {
+                                            "name": "Register Client",
+                                            "data": "{\"type\":\"register\", \"clientId\":\"{{clientId}}\"}",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "name": "Subscribe to Symbols",
+                                            "data": "{\"type\":\"subscribe\", \"symbols\":[\"AAPL\", \"MSFT\"]}",
+                                            "type": "text"
+                                        }
+                                        ]
+                                    },
+                                    "response": []
+                                }
+                    ]
+                }
+            ]
+        }
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000/api",
+			"type": "string"
+		},
+		{
+			"key": "clientId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
