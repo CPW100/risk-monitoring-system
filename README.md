@@ -123,12 +123,15 @@ Bash
 npm install
 Run the development server:
 ```
+
 ```
 Bash
 
 npm run dev
 ```
+
 The application will be accessible at `http://localhost:5173`.
+
 3. **(Optional) To access the server from your phone or another device:**
 You can expose the development server to your local network.
 
@@ -292,7 +295,7 @@ The real-time communication layer was tested in `wsServer.test.js` to validate i
 ## Running Test
 ```
 cd backend
-npm
+npm test
 ```
 
 
@@ -303,7 +306,7 @@ The technical choices for this project were made to deliver a feature-complete a
 The application's primary constraint is its reliance on the free tier of the Twelve Data API, which imposes strict rate limits. A multi-faceted throttling and scheduling strategy was engineered to ensure the application remains robust and functional without exceeding these limits.
 
 - **Initial Price Fetching (Margin Calculation):**
-When a client's margin status is calculated, the system may need to fetch prices for multiple assets not present in the local cache. To manage this, the logic in `marginService.js` fetches these prices in controlled batches: a maximum of 8 symbols are requested at a time, and after each batch, the system enforces a 61-second pause before sending the next one, which might cause the display of *loading page* to persist for 1 minute on fresh load without cache data (61_sec_demo)[https://drive.google.com/file/d/1hI4LeeFYXCEK7fMKvwY5aF2YAYwPfIP8/view?usp=drive_link]. This ensures the application stays reliably within the API's per-minute request limit.
+When a client's margin status is calculated, the system may need to fetch prices for multiple assets not present in the local cache. To manage this, the logic in `marginService.js` fetches these prices in controlled batches: a maximum of 8 symbols are requested at a time, and after each batch, the system enforces a 61-second pause before sending the next one, which might cause the display of *loading page* to persist for 1 minute on fresh load without cache data [61_sec_demo](https://drive.google.com/file/d/1hI4LeeFYXCEK7fMKvwY5aF2YAYwPfIP8/view?usp=drive_link). This ensures the application stays reliably within the API's per-minute request limit.
 
 - **Real-Time WebSocket Subscriptions:**
 A similar strategy is used for real-time updates. The WebSocket server (wsServer.js) rotates its active price subscriptions to provide broad coverage over time:
@@ -313,6 +316,7 @@ A similar strategy is used for real-time updates. The WebSocket server (wsServer
     - **Theoretical Throughput:** This rotation logic gives the system the capacity to provide quasi-real-time updates for approximately 240 unique symbols per hour (8 symbols / 2 minutes = 4 symbols/minute).
 
 - **Historical Chart Data Caching:**
+
 To ensure a fast user experience for chart visualizations and to further conserve API credits, historical chart data is cached in the database for 12 hours.
 
     - **Theoretical Throughput:** This allows the system to handle a maximum of 8 new (uncached) chart data requests per minute. Repeated requests for the same chart are served instantly from the database.
@@ -320,7 +324,9 @@ To ensure a fast user experience for chart visualizations and to further conserv
 The trade-off of this comprehensive strategy is a potential delay (1 to 2 minutes) when fetching prices for new or untracked stocks, but it guarantees the application's stability and adherence to API constraints.
 
 **2. Database for Demonstration Purposes**
+
 For this project, SQLite was chosen to ensure simplicity and portability, allowing an evaluator to run the application without needing to install or configure a separate database server. While ideal for a take-home assignment, SQLite is not designed for the high-concurrency write operations of a large-scale production environment. In a real-world application, this data layer would be migrated to a client-server database like PostgreSQL or MySQL.
 
 **Better Solution**
+
 In a production setting, the current rate-limiting workarounds would be replaced by upgrading to a commercial-tier plan with the data provider. This would provide significantly higher API limits for true real-time data across all assets and allow for the removal of the complex throttling logic in favor of a simpler, more robust codebase.
